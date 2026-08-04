@@ -1,13 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 from app.models.schemas import GenerateRequest, GenerateResponse
 from app.services.llm_service import generate_content
 from app.content_types.registry import get_content_type
+from app.database import get_db
+from app.models.db_models import Generation
 
 router = APIRouter()
 
 
 @router.post("/generate", response_model=GenerateResponse)
-def generate(request: GenerateRequest):
+def generate(request: GenerateRequest, db: Session = Depends(get_db)):
     config = get_content_type(request.content_type)
     if not config:
         raise HTTPException(status_code=400, detail=f"Unsupported content_type: {request.content_type}")
@@ -33,6 +36,21 @@ def generate(request: GenerateRequest):
             detail=f"Content generation failed: {error_message}"
         )
 
+
+    new_generation = Generation(
+        content_type=request.content_type,
+        topic=request.topic,
+        tone=request.tone,
+        length=length,
+        generated_text=text
+    )
+    db.add(new_generation)
+    db.commit()
+
+    return GenerateResponse(
+        content_type=request.content_type,
+        generated_text=text
+    )
     return GenerateResponse(
         content_type=request.content_type,
         generated_text=text
