@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 
 
@@ -7,6 +7,13 @@ class GenerateRequest(BaseModel):
     topic: str = Field(..., example="The benefits of remote work")
     tone: str = Field(default="professional", example="professional")
     length: Optional[int] = Field(default=None, example=600)
+
+    @field_validator("topic")
+    @classmethod
+    def topic_must_not_be_empty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("topic cannot be empty")
+        return v.strip()
 
     class Config:
         json_schema_extra = {

@@ -57,18 +57,31 @@
 <label for="length">Length (words)</label>
 <input type="number" id="length" placeholder="leave blank for default">
 
-<button onclick="generateContent()">Generate</button>
+<button id="generateBtn" onclick="generateContent()">Generate</button>
 
 <div id="result"></div>
 
 <script>
 async function generateContent() {
   const resultDiv = document.getElementById("result");
-  resultDiv.textContent = "Generating...";
+  const btn = document.getElementById("generateBtn");
+
+  btn.disabled = true;
+  btn.textContent = "Generating...";
+  resultDiv.textContent = "";
+
+  const topic = document.getElementById("topic").value.trim();
+
+  if (!topic) {
+    resultDiv.textContent = "Please enter a topic before generating.";
+    btn.disabled = false;
+    btn.textContent = "Generate";
+    return;
+  }
 
   const body = {
     content_type: document.getElementById("content_type").value,
-    topic: document.getElementById("topic").value,
+    topic: topic,
     tone: document.getElementById("tone").value || "professional",
   };
 
@@ -92,10 +105,14 @@ async function generateContent() {
 
     const data = await response.json();
     resultDiv.textContent = data.generated_text;
-  } catch (e) {
+ } catch (e) {
     resultDiv.textContent = "Request failed: " + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Generate";
   }
 }
+
 </script>
 
 </body>
