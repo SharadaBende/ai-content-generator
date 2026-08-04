@@ -22,7 +22,16 @@ def generate(request: GenerateRequest):
             length=length
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_message = str(e)
+        if "rate_limit" in error_message.lower() or "429" in error_message:
+            raise HTTPException(
+                status_code=503,
+                detail="The AI service is temporarily busy (rate limit). Please try again in a moment."
+            )
+        raise HTTPException(
+            status_code=502,
+            detail=f"Content generation failed: {error_message}"
+        )
 
     return GenerateResponse(
         content_type=request.content_type,
