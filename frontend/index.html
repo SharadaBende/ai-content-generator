@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Content Generator</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+  }
+  select, input, textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    box-sizing: border-box;
+  }
+  button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: #333;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  #result {
+    margin-top: 30px;
+    padding: 15px;
+    background: #f4f4f4;
+    white-space: pre-wrap;
+  }
+</style>
+</head>
+<body>
+
+<h1>AI Content Generator</h1>
+
+<label for="content_type">Content Type</label>
+<select id="content_type">
+  <option value="blog">Blog Post</option>
+  <option value="caption">Social Media Caption</option>
+  <option value="ad_copy">Ad Copy</option>
+</select>
+
+<label for="topic">Topic</label>
+<input type="text" id="topic" placeholder="e.g. benefits of remote work">
+
+<label for="tone">Tone</label>
+<input type="text" id="tone" placeholder="e.g. professional, funny, friendly" value="professional">
+
+<label for="length">Length (words)</label>
+<input type="number" id="length" placeholder="leave blank for default">
+
+<button onclick="generateContent()">Generate</button>
+
+<div id="result"></div>
+
+<script>
+async function generateContent() {
+  const resultDiv = document.getElementById("result");
+  resultDiv.textContent = "Generating...";
+
+  const body = {
+    content_type: document.getElementById("content_type").value,
+    topic: document.getElementById("topic").value,
+    tone: document.getElementById("tone").value || "professional",
+  };
+
+  const lengthVal = document.getElementById("length").value;
+  if (lengthVal) {
+    body.length = parseInt(lengthVal);
+  }
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      resultDiv.textContent = "Error: " + (err.detail || response.statusText);
+      return;
+    }
+
+    const data = await response.json();
+    resultDiv.textContent = data.generated_text;
+  } catch (e) {
+    resultDiv.textContent = "Request failed: " + e.message;
+  }
+}
+</script>
+
+</body>
+</html>
