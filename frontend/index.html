@@ -2,193 +2,470 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Content Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --ink: #1C2128;
+    --ink-soft: #262B35;
+    --paper: #F4F1E8;
+    --paper-dim: #ECE7D8;
+    --text: #2A2E35;
+    --text-muted: #6B6459;
+    --text-inverse: #ECE8DE;
+    --gold: #B8862B;
+    --gold-dark: #93691E;
+    --teal: #3D8B85;
+    --border: #D8D2C0;
+    --error: #B14B3F;
+  }
+
+  * { box-sizing: border-box; }
+
   body {
-    font-family: Arial, sans-serif;
-    max-width: 600px;
-    margin: 40px auto;
-    padding: 0 20px;
+    font-family: 'Inter', sans-serif;
+    background: var(--ink);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(184,134,43,0.07), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(61,139,133,0.06), transparent 40%);
+    color: var(--text-inverse);
+    margin: 0;
+    padding: 48px 20px 80px;
+    min-height: 100vh;
   }
-  label {
+
+  .page {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .masthead {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .masthead .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 40px;
+    line-height: 1.1;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .masthead p {
+    font-family: 'Inter', sans-serif;
+    color: rgba(236,232,222,0.55);
+    font-size: 14px;
+    margin-top: 10px;
+  }
+
+  .sheet {
+    background: var(--paper);
+    color: var(--text);
+    border-radius: 3px;
+    padding: 36px 36px 30px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.55), 0 1px 0 rgba(255,255,255,0.04);
+    position: relative;
+  }
+
+  .sheet::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gold), var(--teal));
+    border-radius: 3px 3px 0 0;
+  }
+
+  .field { margin-bottom: 20px; }
+
+  .field label {
     display: block;
-    margin-top: 15px;
-    font-weight: bold;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
   }
-  select, input, textarea {
+
+  .type-tabs {
+    display: flex;
+    gap: 8px;
+  }
+
+  .type-tabs button {
+    flex: 1;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 8px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .type-tabs button:hover { border-color: var(--gold); color: var(--text); }
+
+  .type-tabs button.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--text-inverse);
+  }
+
+  input[type="text"], input[type="number"] {
     width: 100%;
-    padding: 8px;
-    margin-top: 5px;
-    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    padding: 11px 13px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text);
   }
-  button {
-    margin-top: 20px;
-    padding: 10px 20px;
-    background: #333;
-    color: white;
+
+  input:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(184,134,43,0.15);
+  }
+
+  .row { display: flex; gap: 16px; }
+  .row .field { flex: 1; }
+
+  .generate-btn {
+    width: 100%;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 14px;
+    background: var(--gold);
+    color: #1C1300;
     border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+
+  .generate-btn:hover:not(:disabled) { background: var(--gold-dark); }
+  .generate-btn:active:not(:disabled) { transform: scale(0.99); }
+  .generate-btn:disabled { opacity: 0.55; cursor: default; }
+
+  #result {
+    margin-top: 22px;
+    padding: 18px 20px;
+    background: var(--paper-dim);
+    border-left: 3px solid var(--teal);
+    border-radius: 2px;
+    white-space: pre-wrap;
+    font-size: 14.5px;
+    line-height: 1.65;
+    min-height: 20px;
+  }
+
+  #result:empty { display: none; }
+  #result.error-text { border-left-color: var(--error); color: var(--error); }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 40px 0 18px;
+    color: rgba(236,232,222,0.4);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .divider::before, .divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(236,232,222,0.15);
+  }
+
+  .refresh-btn {
+    display: block;
+    margin: 0 auto 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: transparent;
+    border: 1px solid rgba(236,232,222,0.25);
+    color: rgba(236,232,222,0.7);
+    padding: 7px 16px;
+    border-radius: 20px;
     cursor: pointer;
   }
-  #result {
-    margin-top: 30px;
-    padding: 15px;
-    background: #f4f4f4;
+
+  .refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  #history {
+    max-height: 460px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 4px;
+  }
+
+  #history::-webkit-scrollbar { width: 6px; }
+  #history::-webkit-scrollbar-thumb { background: rgba(236,232,222,0.2); border-radius: 3px; }
+
+  .history-card {
+    background: var(--paper);
+    color: var(--text);
+    border-radius: 2px;
+    padding: 16px 18px;
+  }
+
+  .history-card .h-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .history-card .h-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .history-card .h-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: var(--teal);
+    color: #fff;
+    padding: 3px 7px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .history-card .h-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .history-card p {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.6;
     white-space: pre-wrap;
   }
-  #history {
-  max-height: 400px;
-  overflow-y: auto;
-  margin-top: 15px;
-}
+
+  .history-card .toggle-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--gold-dark);
+    background: none;
+    border: none;
+    padding: 8px 0 0;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .empty-state {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: rgba(236,232,222,0.4);
+    text-align: center;
+    padding: 30px 0;
+  }
 </style>
 </head>
 <body>
 
-<h1>AI Content Generator</h1>
+<div class="page">
 
-<label for="content_type">Content Type</label>
-<select id="content_type">
-  <option value="blog">Blog Post</option>
-  <option value="caption">Social Media Caption</option>
-  <option value="ad_copy">Ad Copy</option>
-</select>
+  <div class="masthead">
+    <div class="eyebrow">Draft · Refine · Publish</div>
+    <h1>AI Content Generator</h1>
+    <p>Turn a topic into a blog post, caption, or ad — in seconds.</p>
+  </div>
 
-<label for="topic">Topic</label>
-<input type="text" id="topic" placeholder="e.g. benefits of remote work">
+  <div class="sheet">
 
-<label for="tone">Tone</label>
-<input type="text" id="tone" placeholder="e.g. professional, funny, friendly" value="professional">
+    <div class="field">
+      <label>Content Type</label>
+      <div class="type-tabs" id="typeTabs">
+        <button type="button" data-value="blog" class="active">Blog Post</button>
+        <button type="button" data-value="caption">Caption</button>
+        <button type="button" data-value="ad_copy">Ad Copy</button>
+      </div>
+    </div>
 
-<label for="length">Length (words)</label>
-<input type="number" id="length" placeholder="leave blank for default">
+    <div class="field">
+      <label>Topic</label>
+      <input type="text" id="topic" placeholder="e.g. benefits of remote work">
+    </div>
 
-<button id="generateBtn" onclick="generateContent()">Generate</button>
+    <div class="row">
+      <div class="field">
+        <label>Tone</label>
+        <input type="text" id="tone" placeholder="professional" value="professional">
+      </div>
+      <div class="field">
+        <label>Length (words)</label>
+        <input type="number" id="length" placeholder="default">
+      </div>
+    </div>
 
-<div id="result"></div>
-<hr style="margin-top: 40px;">
+    <button class="generate-btn" id="generateBtn" onclick="generateContent()">Generate</button>
 
-<h2>Recent Generations</h2>
-<button onclick="loadHistory()">Refresh History</button>
-<div id="history"></div>
+    <div id="result"></div>
+
+  </div>
+
+  <div class="divider">Recent Generations</div>
+  <button class="refresh-btn" onclick="loadHistory()">Refresh</button>
+  <div id="history"></div>
+
+</div>
 
 <script>
-async function generateContent() {
-  const resultDiv = document.getElementById("result");
-  const btn = document.getElementById("generateBtn");
+  let selectedType = "blog";
 
-  btn.disabled = true;
-  btn.textContent = "Generating...";
-  resultDiv.textContent = "";
+  document.getElementById("typeTabs").addEventListener("click", (e) => {
+    if (e.target.tagName !== "BUTTON") return;
+    document.querySelectorAll("#typeTabs button").forEach(b => b.classList.remove("active"));
+    e.target.classList.add("active");
+    selectedType = e.target.dataset.value;
+  });
 
-  const topic = document.getElementById("topic").value.trim();
+  async function generateContent() {
+    const resultDiv = document.getElementById("result");
+    const btn = document.getElementById("generateBtn");
 
-  if (!topic) {
-    resultDiv.textContent = "Please enter a topic before generating.";
-    btn.disabled = false;
-    btn.textContent = "Generate";
-    return;
-  }
+    resultDiv.classList.remove("error-text");
+    btn.disabled = true;
+    btn.textContent = "Generating…";
+    resultDiv.textContent = "";
 
-  const body = {
-    content_type: document.getElementById("content_type").value,
-    topic: topic,
-    tone: document.getElementById("tone").value || "professional",
-  };
+    const topic = document.getElementById("topic").value.trim();
 
-  const lengthVal = document.getElementById("length").value;
-  if (lengthVal) {
-    body.length = parseInt(lengthVal);
-  }
-
-  try {
-    const response = await fetch("http://127.0.0.1:8000/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-
-    if (!response.ok) {
-      const err = await response.json();
-      resultDiv.textContent = "Error: " + (err.detail || response.statusText);
+    if (!topic) {
+      resultDiv.classList.add("error-text");
+      resultDiv.textContent = "Please enter a topic before generating.";
+      btn.disabled = false;
+      btn.textContent = "Generate";
       return;
     }
 
-    const data = await response.json();
-    resultDiv.textContent = data.generated_text;
-    loadHistory();
- } catch (e) {
-    resultDiv.textContent = "Request failed: " + e.message;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "Generate";
-  }
-}
+    const body = {
+      content_type: selectedType,
+      topic: topic,
+      tone: document.getElementById("tone").value || "professional",
+    };
 
-
-async function loadHistory() {
-  const historyDiv = document.getElementById("history");
-  historyDiv.textContent = "Loading history...";
-
-  try {
-    const response = await fetch("http://127.0.0.1:8000/history?limit=10");
-    const data = await response.json();
-
-    if (data.length === 0) {
-      historyDiv.textContent = "No generations yet.";
-      return;
+    const lengthVal = document.getElementById("length").value;
+    if (lengthVal) {
+      body.length = parseInt(lengthVal);
     }
 
-    historyDiv.innerHTML = "";
+    try {
+      const response = await fetch("http://127.0.0.1:8000/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
 
-    data.forEach((item, index) => {
-      const card = document.createElement("div");
-      card.style.border = "1px solid #ddd";
-      card.style.padding = "12px";
-      card.style.marginTop = "10px";
-      card.style.background = "#fafafa";
-
-      const title = document.createElement("strong");
-      title.textContent = `[${item.content_type}] ${item.topic}`;
-
-      const meta = document.createElement("div");
-      meta.style.fontSize = "12px";
-      meta.style.color = "#777";
-      meta.textContent = `Tone: ${item.tone} | Length: ${item.length} | ${new Date(item.created_at).toLocaleString()}`;
-
-      const preview = document.createElement("p");
-      preview.style.whiteSpace = "pre-wrap";
-      const shortText = item.generated_text.slice(0, 120) + (item.generated_text.length > 120 ? "..." : "");
-      preview.textContent = shortText;
-
-      const toggleBtn = document.createElement("button");
-      toggleBtn.textContent = "Show more";
-      toggleBtn.style.fontSize = "12px";
-      toggleBtn.style.padding = "4px 8px";
-      toggleBtn.style.marginTop = "5px";
-
-      let expanded = false;
-      toggleBtn.onclick = () => {
-        expanded = !expanded;
-        preview.textContent = expanded ? item.generated_text : shortText;
-        toggleBtn.textContent = expanded ? "Show less" : "Show more";
-      };
-
-      card.appendChild(title);
-      card.appendChild(meta);
-      card.appendChild(preview);
-      if (item.generated_text.length > 120) {
-        card.appendChild(toggleBtn);
+      if (!response.ok) {
+        const err = await response.json();
+        resultDiv.classList.add("error-text");
+        resultDiv.textContent = "Error: " + (err.detail || response.statusText);
+        return;
       }
-      historyDiv.appendChild(card);
-    });
 
-  } catch (e) {
-    historyDiv.textContent = "Failed to load history: " + e.message;
+      const data = await response.json();
+      resultDiv.textContent = data.generated_text;
+      loadHistory();
+    } catch (e) {
+      resultDiv.classList.add("error-text");
+      resultDiv.textContent = "Request failed: " + e.message;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Generate";
+    }
   }
-}
 
+  async function loadHistory() {
+    const historyDiv = document.getElementById("history");
+    historyDiv.innerHTML = '<div class="empty-state">Loading…</div>';
 
-window.onload = loadHistory;
+    try {
+      const response = await fetch("http://127.0.0.1:8000/history?limit=10");
+      const data = await response.json();
+
+      if (data.length === 0) {
+        historyDiv.innerHTML = '<div class="empty-state">No generations yet — try creating one above.</div>';
+        return;
+      }
+
+      historyDiv.innerHTML = "";
+
+      data.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "history-card";
+
+        const shortText = item.generated_text.slice(0, 120) + (item.generated_text.length > 120 ? "…" : "");
+        const isLong = item.generated_text.length > 120;
+
+        card.innerHTML = `
+          <div class="h-top">
+            <span class="h-title">${item.topic}</span>
+            <span class="h-badge">${item.content_type}</span>
+          </div>
+          <div class="h-meta">${item.tone} · ${item.length} words · ${new Date(item.created_at).toLocaleString()}</div>
+          <p class="h-text">${shortText}</p>
+          ${isLong ? '<button class="toggle-btn">Show more</button>' : ''}
+        `;
+
+        if (isLong) {
+          const p = card.querySelector(".h-text");
+          const toggle = card.querySelector(".toggle-btn");
+          let expanded = false;
+          toggle.onclick = () => {
+            expanded = !expanded;
+            p.textContent = expanded ? item.generated_text : shortText;
+            toggle.textContent = expanded ? "Show less" : "Show more";
+          };
+        }
+
+        historyDiv.appendChild(card);
+      });
+
+    } catch (e) {
+      historyDiv.innerHTML = `<div class="empty-state">Failed to load history: ${e.message}</div>`;
+    }
+  }
+
+  window.onload = loadHistory;
 </script>
 
 </body>
