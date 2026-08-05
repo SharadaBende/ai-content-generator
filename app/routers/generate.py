@@ -5,14 +5,18 @@ from app.services.llm_service import generate_content
 from app.content_types.registry import get_content_type
 from app.database import get_db
 from app.models.db_models import Generation
+from app.logger import logger
 
 router = APIRouter()
 
 
 @router.post("/generate", response_model=GenerateResponse)
 def generate(request: GenerateRequest, db: Session = Depends(get_db)):
+    logger.info(f"Generate request received: type={request.content_type}, topic='{request.topic}'")
+
     config = get_content_type(request.content_type)
     if not config:
+        logger.warning(f"Unsupported content_type requested: {request.content_type}")
         raise HTTPException(status_code=400, detail=f"Unsupported content_type: {request.content_type}")
 
     length = request.length or config["default_length"]
@@ -24,8 +28,10 @@ def generate(request: GenerateRequest, db: Session = Depends(get_db)):
             tone=request.tone,
             length=length
         )
+        logger.info(f"Generation succeeded: type={request.content_type}, length={len(text)} chars")
     except Exception as e:
         error_message = str(e)
+        logger.error(f"Generation failed: type={request.content_type}, error={error_message}")
         if "rate_limit" in error_message.lower() or "429" in error_message:
             raise HTTPException(
                 status_code=503,
@@ -36,7 +42,6 @@ def generate(request: GenerateRequest, db: Session = Depends(get_db)):
             detail=f"Content generation failed: {error_message}"
         )
 
-
     new_generation = Generation(
         content_type=request.content_type,
         topic=request.topic,
@@ -46,15 +51,15 @@ def generate(request: GenerateRequest, db: Session = Depends(get_db)):
     )
     db.add(new_generation)
     db.commit()
+    logger.info(f"Generation saved to database: id={new_generation.id}")
 
     return GenerateResponse(
         content_type=request.content_type,
         generated_text=text
     )
-    return GenerateResponse(
-        content_type=request.content_type,
-        generated_text=text
-    )
+
+
+   
 
 
 @router.get("/history")
