@@ -2,6 +2,8 @@
 
 A full-stack web application that generates AI-powered content (blog posts, social media captions, and ad copy) using Groq's Llama 3.3 model. Built with FastAPI, SQLite, and vanilla JavaScript.
 
+![App Screenshot](screenshots/app-preview.png)
+
 ## Features
 
 - **Multi-type content generation** — Blog posts, social media captions, and ad copy, powered by an extensible content-type registry
