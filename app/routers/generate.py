@@ -55,3 +55,26 @@ def generate(request: GenerateRequest, db: Session = Depends(get_db)):
         content_type=request.content_type,
         generated_text=text
     )
+
+
+@router.get("/history")
+def get_history(limit: int = 20, db: Session = Depends(get_db)):
+    generations = (
+        db.query(Generation)
+        .order_by(Generation.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    return [
+        {
+            "id": g.id,
+            "content_type": g.content_type,
+            "topic": g.topic,
+            "tone": g.tone,
+            "length": g.length,
+            "generated_text": g.generated_text,
+            "created_at": g.created_at
+        }
+        for g in generations
+    ]
