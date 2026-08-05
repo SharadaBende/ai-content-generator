@@ -35,6 +35,11 @@
     background: #f4f4f4;
     white-space: pre-wrap;
   }
+  #history {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-top: 15px;
+}
 </style>
 </head>
 <body>
@@ -60,6 +65,11 @@
 <button id="generateBtn" onclick="generateContent()">Generate</button>
 
 <div id="result"></div>
+<hr style="margin-top: 40px;">
+
+<h2>Recent Generations</h2>
+<button onclick="loadHistory()">Refresh History</button>
+<div id="history"></div>
 
 <script>
 async function generateContent() {
@@ -105,6 +115,7 @@ async function generateContent() {
 
     const data = await response.json();
     resultDiv.textContent = data.generated_text;
+    loadHistory();
  } catch (e) {
     resultDiv.textContent = "Request failed: " + e.message;
   } finally {
@@ -113,6 +124,71 @@ async function generateContent() {
   }
 }
 
+
+async function loadHistory() {
+  const historyDiv = document.getElementById("history");
+  historyDiv.textContent = "Loading history...";
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/history?limit=10");
+    const data = await response.json();
+
+    if (data.length === 0) {
+      historyDiv.textContent = "No generations yet.";
+      return;
+    }
+
+    historyDiv.innerHTML = "";
+
+    data.forEach((item, index) => {
+      const card = document.createElement("div");
+      card.style.border = "1px solid #ddd";
+      card.style.padding = "12px";
+      card.style.marginTop = "10px";
+      card.style.background = "#fafafa";
+
+      const title = document.createElement("strong");
+      title.textContent = `[${item.content_type}] ${item.topic}`;
+
+      const meta = document.createElement("div");
+      meta.style.fontSize = "12px";
+      meta.style.color = "#777";
+      meta.textContent = `Tone: ${item.tone} | Length: ${item.length} | ${new Date(item.created_at).toLocaleString()}`;
+
+      const preview = document.createElement("p");
+      preview.style.whiteSpace = "pre-wrap";
+      const shortText = item.generated_text.slice(0, 120) + (item.generated_text.length > 120 ? "..." : "");
+      preview.textContent = shortText;
+
+      const toggleBtn = document.createElement("button");
+      toggleBtn.textContent = "Show more";
+      toggleBtn.style.fontSize = "12px";
+      toggleBtn.style.padding = "4px 8px";
+      toggleBtn.style.marginTop = "5px";
+
+      let expanded = false;
+      toggleBtn.onclick = () => {
+        expanded = !expanded;
+        preview.textContent = expanded ? item.generated_text : shortText;
+        toggleBtn.textContent = expanded ? "Show less" : "Show more";
+      };
+
+      card.appendChild(title);
+      card.appendChild(meta);
+      card.appendChild(preview);
+      if (item.generated_text.length > 120) {
+        card.appendChild(toggleBtn);
+      }
+      historyDiv.appendChild(card);
+    });
+
+  } catch (e) {
+    historyDiv.textContent = "Failed to load history: " + e.message;
+  }
+}
+
+
+window.onload = loadHistory;
 </script>
 
 </body>
