@@ -4,9 +4,15 @@ from app.routers import generate
 
 app = FastAPI(title="AI Content Generator")
 
+from app.config import settings
+
+allowed_origins = ["*"] if not settings.is_production else [
+    "https://your-production-domain.com"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
