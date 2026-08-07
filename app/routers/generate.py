@@ -53,10 +53,7 @@ def generate(request: GenerateRequest, db: Session = Depends(get_db)):
     db.commit()
     logger.info(f"Generation saved to database: id={new_generation.id}")
 
-    return GenerateResponse(
-        content_type=request.content_type,
-        generated_text=text
-    )
+    return new_generation
 
 
    

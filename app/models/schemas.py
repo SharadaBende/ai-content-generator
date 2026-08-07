@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional
-
+from datetime import datetime
 
 class GenerateRequest(BaseModel):
     content_type: str = Field(..., example="blog")
@@ -27,5 +27,13 @@ class GenerateRequest(BaseModel):
 
 
 class GenerateResponse(BaseModel):
+    id: int
     content_type: str
+    topic: str
+    tone: str
+    length: int
     generated_text: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
